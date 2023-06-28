@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "lc3-emu"
+version = "0.1.0"
+description = "Little Computer 3 emulator"
+authors = ["hadrizi <vbyhgn@gmail.com>"]
+readme = "README.md"
+packages = [{include = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+[tool.poetry.scripts]
+lc3 = "src.lc3:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
