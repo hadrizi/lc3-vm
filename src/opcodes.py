@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 def NOT(vm: lc3, opcode: int):
     dst = (opcode >> 9) & 7
     src = (opcode >> 6) & 7
-    vm.registers[dst].value = ~vm.registers[src].value
+    vm.set_register(dst, ~vm.registers[src].value)
 
 
 def AND(vm: lc3, opcode: int):
@@ -17,7 +17,7 @@ def AND(vm: lc3, opcode: int):
         src2 = opcode & 31
     else:
         src2 = vm.registers[opcode & 7].value
-    vm.registers[dst].value = src1 & src2
+    vm.set_register(dst, src1 & src2)
 
 
 def ADD(vm: lc3, opcode: int):
@@ -27,13 +27,13 @@ def ADD(vm: lc3, opcode: int):
         src2 = opcode & 31
     else:
         src2 = vm.registers[opcode & 7].value
-    vm.registers[dst].value = src1 + src2
+    vm.set_register(dst, src1 + src2)
 
 
 def LD(vm: lc3, opcode: int):
     dst = (opcode >> 9) & 7
     offset = opcode & 511
-    vm.registers[dst].value = vm.memory[vm.pc + offset]
+    vm.set_register(dst, vm.memory[vm.pc + offset])
 
 
 def ST(vm: lc3, opcode: int):
@@ -46,7 +46,7 @@ def LDI(vm: lc3, opcode: int):
     dst = (opcode >> 9) & 7
     offset = opcode & 511
     src = vm.memory[vm.pc + offset]
-    vm.registers[dst].value = vm.memory[src]
+    vm.set_register(dst, vm.memory[src])
 
 
 def STI(vm: lc3, opcode: int):
@@ -60,7 +60,7 @@ def LDR(vm: lc3, opcode: int):
     dst = (opcode >> 9) & 7
     base = vm.registers[(opcode >> 6) & 7].value
     offset = opcode & 63
-    vm.registers[dst].value = vm.memory[base+offset]
+    vm.set_register(dst, vm.memory[base+offset])
 
 
 def STR(vm: lc3, opcode: int):
@@ -69,3 +69,43 @@ def STR(vm: lc3, opcode: int):
     offset = offset = opcode & 63
     vm.memory[base + offset] = vm.registers[src].value
 
+
+def LEA(vm: lc3, opcode: int):
+    dst = (opcode >> 9) & 7
+    offset = opcode & 511
+    vm.registers[dst].value = vm.pc + offset
+
+
+def BR(vm: lc3, opcode: int):
+    n = bool((opcode >> 11) & 1)
+    z = bool((opcode >> 10) & 1)
+    p = bool((opcode >>  9) & 1)
+    offset = opcode & 511
+
+    if (
+        (n and vm.condition_codes.n) or 
+        (z and vm.condition_codes.z) or 
+        (p and vm.condition_codes.p)
+    ):
+        vm.pc += offset
+
+
+def JMP(vm: lc3, opcode: int):
+    base = (opcode >> 6) & 7
+    vm.pc = vm.registers[base].value
+
+
+def JSR(vm: lc3, opcode: int):
+    is_long = bool((opcode >> 11) & 1)
+    vm.registers[7].value = vm.pc
+    if is_long:
+        offset = opcode & 2047
+        vm.pc += offset
+    else:
+        src = (opcode >> 6) & 7
+        vm.pc = vm.registers[src].value
+
+
+def TRAP(vm: lc3, opcode: int):
+    vector = opcode & 255
+    vm.execute_trap_vector(vector)
