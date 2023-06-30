@@ -1,3 +1,4 @@
+import sys
 from src import asm, opcodes
 from src.utils import getch
 from typing import List
@@ -81,12 +82,17 @@ class lc3:
 
 
 
-def main():
+def main(filename = None):
     vm = lc3()
-    program = [
-        asm.TRAP(0x23),
-        asm.TRAP(0x21),
-    ]
+    if filename:
+        with open(filename) as f:
+            program = list(bytearray(f.read()))
+    else:
+        program = [
+            asm.TRAP(0x23),
+            asm.TRAP(0x21),
+        ]
+    
     vm.run(program)
 
     print(program)
@@ -100,4 +106,7 @@ def main():
         print(f"mem [{i}] ", vm.memory[i])
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) == 2:
+        main(sys.argv[1])
+    else:
+        main()
