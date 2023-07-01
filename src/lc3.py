@@ -52,9 +52,10 @@ class lc3:
 
     def run(self, program: List[int]):
         while True:
-            op = program[self.pc]
+            op = (program[self.pc] << 8) | program[self.pc + 1]
+            self.pc += 2
             try:
-                lc3.opcodes[(op >> 12) & 15](self, op)
+                lc3.opcodes[(op >> 12)](self, op)
             except lc3.HaltException:
                 print("halting lc3-vm")
                 exit(0)
@@ -88,10 +89,11 @@ def main(filename = None):
         with open(filename) as f:
             program = list(bytearray(f.read()))
     else:
-        program = [
-            asm.TRAP(0x23),
-            asm.TRAP(0x21),
-        ]
+        program = [0] * 0x3000
+        program.append([
+            *asm.TRAP(0x23),
+            *asm.TRAP(0x21),
+        ])
     
     vm.run(program)
 
